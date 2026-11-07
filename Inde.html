@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Pasar Mini</title>
+<style>
+:root{--bg1:#ff9a3d;--bg2:#ff5e7e;--ink:#3a2a4f;--yellow:#ffd23f;--ok:#2ecc71;--bad:#ff4d5e;--soft:#fff6e8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:#2a1a33;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);overflow:hidden}
+#app{position:relative;max-width:520px;height:100dvh;margin:0 auto;background:linear-gradient(160deg,var(--bg1),var(--bg2));overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:14px 14px;text-align:center;overflow-y:auto}
+.screen.active{display:flex}
+h1{margin:6px 0 0;font-size:2.3rem;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.22)}
+.sub{color:#fff;margin:4px 0 8px;opacity:.95}
+.big{font-size:5.5rem;line-height:1.1;animation:float 2.4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px) rotate(3deg)}}
+.btn{display:block;width:100%;max-width:340px;margin:6px auto;padding:13px 14px;font-size:1.1rem;font-weight:800;color:var(--ink);background:var(--yellow);border:0;border-radius:18px;box-shadow:0 6px 0 #c9a21c;cursor:pointer;font-family:inherit}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c9a21c}
+.btn.alt{background:#fff;box-shadow:0 6px 0 #e0c9b0}
+.btn.alt:active{box-shadow:0 2px 0 #e0c9b0}
+.btn.small{padding:9px 12px;font-size:.95rem}
+.btn.ok{background:var(--ok);color:#fff;box-shadow:0 6px 0 #1e9d55}
+.btn.ok:active{box-shadow:0 2px 0 #1e9d55}
+.stat{color:#fff;font-weight:700;margin:4px 0}
+.foot{margin-top:auto;color:#fff;opacity:.8;font-size:.8rem;padding-top:8px}
+.row{display:flex;gap:8px;width:100%;max-width:340px}
+/* uang */
+.note{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:84px;height:54px;border-radius:10px;font-weight:900;color:#2b2350;box-shadow:0 3px 0 rgba(0,0,0,.22);border:2px solid rgba(255,255,255,.75);line-height:1}
+.note small{font-size:.6rem;opacity:.7}
+.note b{font-size:1.05rem}
+.note.coin{width:58px;height:58px;border-radius:50%}
+.mini .note{width:60px;height:38px}
+.mini .note.coin{width:42px;height:42px}
+.mini .note b{font-size:.8rem}
+.mini .note small{display:none}
+/* game */
+#game{padding-bottom:10px}
+#hud{width:100%;display:flex;justify-content:space-between;align-items:center;color:#fff;font-weight:800}
+#hud .pill{background:rgba(0,0,0,.22);padding:5px 11px;border-radius:99px;font-size:1rem}
+#cust{width:100%;margin-top:8px;background:#fff;border-radius:22px;padding:10px 12px;box-shadow:0 6px 0 rgba(0,0,0,.16);text-align:left}
+#custTop{display:flex;align-items:center;gap:10px}
+#custE{font-size:3.4rem;line-height:1;position:relative}
+#mood{position:absolute;right:-10px;bottom:-4px;font-size:1.4rem}
+#bubble{flex:1;background:var(--soft);border-radius:14px;padding:6px 10px;font-weight:700;font-size:.95rem}
+.line{display:flex;justify-content:space-between;gap:8px;padding:1px 0}
+.line.tot{border-top:2px dashed #e6cfae;margin-top:3px;padding-top:3px;font-size:1rem}
+#pay{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-weight:800}
+#pat{height:12px;border-radius:99px;background:#eee;margin-top:8px;overflow:hidden}
+#patfill{height:100%;width:100%;background:var(--ok);border-radius:99px}
+#tray{width:100%;margin-top:8px;background:rgba(255,255,255,.92);border-radius:20px;padding:8px 10px;min-height:96px}
+#tray .lbl{font-size:.85rem;font-weight:700;opacity:.75}
+#trayAmt{font-size:1.8rem;font-weight:900}
+#chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;min-height:44px;align-items:center}
+#chips .note{cursor:pointer}
+#deno{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;justify-items:center}
+.dbtn{border:0;background:rgba(255,255,255,.35);border-radius:16px;padding:6px;width:100%;display:flex;justify-content:center;align-items:center;min-height:68px;cursor:pointer}
+.dbtn:active{transform:scale(.93);background:rgba(255,255,255,.6)}
+#actions{width:100%;display:flex;gap:8px;margin-top:8px}
+#actions .btn{margin:0;max-width:none}
+#hint{width:100%;color:#fff;font-weight:700;font-size:.85rem;margin-top:6px;text-align:center}
+#toast{position:absolute;top:36%;left:50%;transform:translate(-50%,0);background:#fff;padding:12px 18px;border-radius:20px;font-weight:900;font-size:1.25rem;box-shadow:0 8px 0 rgba(0,0,0,.2);opacity:0;pointer-events:none;z-index:9;transition:opacity .2s;text-align:center;max-width:88%}
+#toast.show{opacity:1}
+#toast.bad{background:var(--bad);color:#fff}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:8}
+.fx{position:absolute;font-size:1.8rem}
+@keyframes shake{25%{margin-left:-8px}75%{margin-left:8px}}
+.shake{animation:shake .4s}
+@keyframes hop{40%{transform:translateY(-14px)}}
+.hop{animation:hop .5s}
+/* koleksi & bantuan */
+#grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;margin:10px 0;overflow:auto;flex:1;align-content:start}
+.mc{background:rgba(255,255,255,.93);border-radius:18px;padding:10px 4px;font-size:.75rem;font-weight:700}
+.mc .e{font-size:2.6rem}
+.mc.lock{filter:grayscale(1);opacity:.55}
+.mc.cur{outline:4px solid var(--yellow)}
+.helpbox{background:#fff;border-radius:20px;padding:14px 16px;text-align:left;width:100%;max-width:380px;margin:10px 0;font-weight:600;line-height:1.5}
+.helpbox li{margin:6px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section id="menu" class="screen active">
+  <h1 id="title"></h1>
+  <div class="sub">Jadi penjual dan beri kembalian dengan tepat!</div>
+  <div class="big" id="menuShop">🛒</div>
+  <div class="stat" id="menuStat"></div>
+  <button class="btn" data-lv="1">🪙 Pemula</button>
+  <button class="btn" data-lv="3">💵 Biasa</button>
+  <button class="btn" data-lv="6">🔥 Jago</button>
+  <div class="row">
+    <button class="btn alt small" id="btnHelp" style="flex:1">❓ Cara Main</button>
+    <button class="btn alt small" id="btnColl" style="flex:1">🏆 Koleksi</button>
+    <button class="btn alt small" id="btnSnd" style="flex:1">🔊 Suara</button>
+  </div>
+  <div class="foot" id="credit"></div>
+</section>
+
+<section id="game" class="screen">
+  <div id="hud"><span class="pill" id="hLives"></span><span class="pill" id="hLevel"></span><span class="pill" id="hScore"></span></div>
+  <div id="cust">
+    <div id="custTop"><div id="custE"><span id="custEm">🙂</span><span id="mood">🙂</span></div><div id="bubble"></div></div>
+    <div id="pay"></div>
+    <div id="pat"><div id="patfill"></div></div>
+  </div>
+  <div id="tray">
+    <div class="lbl">Kembalian yang kamu beri:</div>
+    <div id="trayAmt">Rp0</div>
+    <div id="chips" class="mini"></div>
+  </div>
+  <div id="deno"></div>
+  <div id="actions">
+    <button class="btn alt" id="btnUndo" style="flex:1">↩ Hapus</button>
+    <button class="btn ok" id="btnGive" style="flex:2">✅ Beri Kembalian</button>
+  </div>
+  <div id="hint">Kembalian = Bayar − Total belanja</div>
+  <div id="toast"></div>
+  <div id="fx"></div>
+</section>
+
+<section id="over" class="screen">
+  <h1>Toko Tutup!</h1>
+  <div class="big" id="overShop">🛒</div>
+  <div class="stat" style="font-size:1.6rem" id="overScore"></div>
+  <div class="stat" id="overBest"></div>
+  <div class="stat" id="overInfo"></div>
+  <button class="btn" id="btnAgain">🔄 Buka Toko Lagi</button>
+  <button class="btn alt" id="btnShare">📣 Tantang Temanmu</button>
+  <button class="btn alt" id="btnMenu">🏠 Menu</button>
+</section>
+
+<section id="coll" class="screen">
+  <h1>Koleksi Toko</h1>
+  <div class="sub">Layani pembeli untuk menaikkan level tokomu!</div>
+  <div id="grid"></div>
+  <button class="btn" id="btnBack">⬅️ Kembali</button>
+</section>
+
+<section id="help" class="screen">
+  <h1>Cara Main</h1>
+  <div class="helpbox">
+    <ol style="margin:0;padding-left:20px">
+      <li>Pembeli datang dan membeli barang. Lihat <b>Total belanja</b> dan uang yang <b>dibayar</b>.</li>
+      <li>Hitung kembaliannya: <b>Bayar − Total</b>.</li>
+      <li>Ketuk uang di bawah untuk menyusun kembalian. Ketuk uang di kotak untuk menghapusnya.</li>
+      <li>Tekan <b>Beri Kembalian</b>. Cepat dan tepat dapat poin lebih banyak!</li>
+      <li>Salah atau kelamaan, nyawa berkurang. Ada 3 nyawa.</li>
+    </ol>
+  </div>
+  <button class="btn" id="btnHelpBack">⬅️ Kembali</button>
+</section>
+
+</div>
+
+<script>
+/* ===== PENGATURAN PENJUAL (silakan ubah) ===== */
+const CONFIG = {
+  title: "Pasar Mini",
+  credit: "Dibuat dengan ❤️ oleh NAMA_TOKO_KAMU",
+  shareText: "Aku jadi penjual di Pasar Mini! Bisa nggak kamu kasih kembalian secepat aku?"
+};
+/* ============================================= */
+
+/*LOGIC_START*/
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+const money = n => "Rp" + fmt(n);
+const DENOS = [500, 1000, 2000, 5000, 10000, 20000];
+const ITEMS = [
+  { e: "🍎", n: "Apel" }, { e: "🍌", n: "Pisang" }, { e: "🥕", n: "Wortel" }, { e: "🍞", n: "Roti" },
+  { e: "🥛", n: "Susu" }, { e: "🍉", n: "Semangka" }, { e: "🍇", n: "Anggur" }, { e: "🥚", n: "Telur" },
+  { e: "🍩", n: "Donat" }, { e: "🍊", n: "Jeruk" }, { e: "🌽", n: "Jagung" }, { e: "🍪", n: "Kue" }
+];
+const CUSTOMERS = ["👩", "👨", "👵", "👴", "👧", "👦", "🧑", "🧕"];
+function genOrder(lv) {
+  const step = lv >= 5 ? 500 : 1000;
+  const maxP = lv <= 2 ? 4000 : lv <= 4 ? 8000 : lv <= 6 ? 12000 : 16000;
+  const n = lv <= 2 ? 1 : lv <= 4 ? rnd(1, 2) : rnd(1, 3);
+  const items = shuffle(ITEMS.slice()).slice(0, n).map(it => ({ e: it.e, n: it.n, price: rnd(1, maxP / step) * step }));
+  const total = items.reduce((a, b) => a + b.price, 0);
+  const maxChange = lv <= 2 ? 9000 : lv <= 4 ? 19000 : 39500;
+  const bills = [5000, 10000, 20000, 50000, 100000];
+  let opts = bills.filter(b => b > total && (lv > 2 || b <= 10000) && b - total <= maxChange).slice(0, 2);
+  if (!opts.length) opts = [bills.find(b => b > total)];
+  const pay = opts[rnd(0, opts.length - 1)];
+  return { items, total, pay, change: pay - total, cust: CUSTOMERS[rnd(0, CUSTOMERS.length - 1)] };
+}
+/*LOGIC_END*/
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const SHOPS = [
+  { e: "🛒", n: "Gerobak", t: 0 }, { e: "🧺", n: "Lapak Sayur", t: 10 }, { e: "🏠", n: "Warung", t: 30 },
+  { e: "🏪", n: "Toko Kelontong", t: 60 }, { e: "🏬", n: "Toko Besar", t: 100 }, { e: "🏢", n: "Pasar Modern", t: 160 }
+];
+const STYLE = { 500: ["#d5d9e2", 1], 1000: ["#ffd23f", 1], 2000: ["#b9c2cf", 0], 5000: ["#e6b07a", 0], 10000: ["#b49cff", 0], 20000: ["#72dd9f", 0], 50000: ["#72b8ff", 0], 100000: ["#ff93ab", 0] };
+const noteHTML = n => `<div class="note ${STYLE[n][1] ? "coin" : ""}" style="background:${STYLE[n][0]}"><small>Rp</small><b>${fmt(n)}</b></div>`;
+
+/* suara */
+let ac, soundOn = store.get("pm_snd", true);
+function beep(f, d, type = "sine", v = .14, delay = 0) {
+  if (!soundOn) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+    const t = ac.currentTime + delay;
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+    o.start(t); o.stop(t + d);
+  } catch (e) {}
+}
+const sndCoin = n => { beep(n <= 1000 ? 1318 : 880, .08, "triangle", .12); beep(n <= 1000 ? 1760 : 1100, .1, "triangle", .08, .05); };
+const sndOk = () => { [523, 659, 784, 1046].forEach((f, i) => beep(f, .15, "triangle", .13, i * .08)); };
+const sndBad = () => { beep(220, .25, "sawtooth", .1); beep(160, .3, "sawtooth", .1, .15); };
+
+let total = store.get("pm_total", 0), best = store.get("pm_best", 0);
+const stageOf = n => { let s = 0; SHOPS.forEach((m, i) => { if (n >= m.t) s = i; }); return s; };
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id)); }
+function refreshMenu() {
+  $("title").textContent = CONFIG.title; document.title = CONFIG.title;
+  $("credit").textContent = CONFIG.credit;
+  $("menuShop").textContent = SHOPS[stageOf(total)].e;
+  $("menuStat").textContent = "🏅 Poin terbaik: " + best + "   🧾 Pembeli dilayani: " + total;
+  $("btnSnd").textContent = soundOn ? "🔊 Suara" : "🔇 Hening";
+}
+function showColl() {
+  const st = stageOf(total);
+  $("grid").innerHTML = SHOPS.map((m, i) => {
+    const un = total >= m.t;
+    return `<div class="mc ${un ? "" : "lock"} ${i === st ? "cur" : ""}"><div class="e">${un ? m.e : "❓"}</div>${un ? m.n : "Layani " + m.t + " pembeli"}</div>`;
+  }).join("");
+  show("coll");
+}
+
+/* game */
+const G = { base: 1, lv: 1, score: 0, lives: 3, streak: 0, served: 0, order: null, tray: [], lock: true, run: false, pat: 0, patMax: 20, last: 0 };
+
+function startGame(lv) {
+  Object.assign(G, { base: lv, lv, score: 0, lives: 3, streak: 0, served: 0, run: true, lock: true });
+  show("game"); updateHud();
+  $("deno").innerHTML = DENOS.map(n => `<button class="dbtn" data-n="${n}">${noteHTML(n)}</button>`).join("");
+  document.querySelectorAll(".dbtn").forEach(b => b.addEventListener("pointerdown", e => { e.preventDefault(); addMoney(+b.dataset.n); }));
+  setTimeout(() => { nextCustomer(); G.last = performance.now(); requestAnimationFrame(loop); }, 150);
+}
+function updateHud() {
+  $("hLives").textContent = "❤️".repeat(G.lives) + "🖤".repeat(3 - G.lives);
+  $("hLevel").textContent = SHOPS[stageOf(total)].e + " Level " + G.lv;
+  $("hScore").textContent = "⭐ " + G.score;
+}
+function nextCustomer() {
+  if (!G.run) return;
+  const o = G.order = genOrder(G.lv);
+  G.tray = []; G.patMax = G.pat = Math.max(14, 32 - G.lv * 2.2); G.lock = false;
+  $("custEm").textContent = o.cust; $("mood").textContent = "🙂";
+  $("bubble").innerHTML = o.items.map(i => `<div class="line"><span>${i.e} ${i.n}</span><b>${money(i.price)}</b></div>`).join("") +
+    `<div class="line tot"><span>Total belanja</span><b>${money(o.total)}</b></div>`;
+  $("pay").innerHTML = `<span>Pembeli membayar:</span>${noteHTML(o.pay)}`;
+  $("hint").style.display = total < 5 ? "block" : "none";
+  renderTray(); updateHud();
+}
+function renderTray() {
+  const sum = G.tray.reduce((a, b) => a + b, 0);
+  $("trayAmt").textContent = money(sum);
+  $("chips").innerHTML = G.tray.map((n, i) => `<span data-i="${i}">${noteHTML(n)}</span>`).join("");
+  document.querySelectorAll("#chips span").forEach(s => s.addEventListener("pointerdown", e => { e.preventDefault(); if (G.lock) return; G.tray.splice(+s.dataset.i, 1); renderTray(); }));
+}
+function addMoney(n) {
+  if (G.lock || !G.run) return;
+  G.tray.push(n); G.tray.sort((a, b) => b - a); sndCoin(n); renderTray();
+}
+function loop(t) {
+  if (!G.run) return;
+  const dt = Math.min((t - G.last) / 1000, .1); G.last = t;
+  if (!G.lock) {
+    G.pat -= dt;
+    const p = Math.max(0, G.pat / G.patMax);
+    const f = $("patfill"); f.style.width = (p * 100) + "%";
+    f.style.background = p > .5 ? "#2ecc71" : p > .25 ? "#ffb02e" : "#ff4d5e";
+    if (p < .3) $("mood").textContent = "😟";
+    if (G.pat <= 0) fail("Pembeli pergi!");
+  }
+  requestAnimationFrame(loop);
+}
+function give() {
+  if (G.lock || !G.run) return;
+  const sum = G.tray.reduce((a, b) => a + b, 0);
+  sum === G.order.change ? success() : fail(sum > G.order.change ? "Kelebihan!" : "Kurang!");
+}
+function success() {
+  G.lock = true; G.streak++; G.served++; total++; store.set("pm_total", total);
+  const bonus = Math.round(clamp(G.pat / G.patMax) * 10), gain = 10 + Math.min(G.streak, 10) * 2 + bonus;
+  G.score += gain; $("mood").textContent = "😍"; $("custEm").parentElement.classList.add("hop");
+  setTimeout(() => $("custEm").parentElement.classList.remove("hop"), 600);
+  sndOk(); burst(["⭐", "✨", "🪙", "💰"]);
+  const before = stageOf(total - 1), after = stageOf(total);
+  let msg = "Pas! +" + gain + (G.streak >= 3 ? "  🔥x" + G.streak : ""), delay = 1000;
+  const newLv = G.base + Math.floor(G.served / 5);
+  if (after > before) { msg = "🎉 Tokomu naik!<br>" + SHOPS[after].e + " " + SHOPS[after].n; delay = 1800; }
+  else if (newLv > G.lv) { G.lv = newLv; msg = "🚀 Level " + G.lv + "!"; delay = 1400; }
+  toast(msg, false, delay - 100); updateHud();
+  setTimeout(nextCustomer, delay);
+}
+function fail(reason) {
+  G.lock = true; G.streak = 0; G.lives--; $("mood").textContent = "😠";
+  $("cust").classList.add("shake"); setTimeout(() => $("cust").classList.remove("shake"), 450);
+  sndBad(); updateHud();
+  toast(reason + "<br>Kembalian yang benar: " + money(G.order.change), true, 1800);
+  if (G.lives <= 0) { G.run = false; setTimeout(gameOver, 2100); } else setTimeout(nextCustomer, 2100);
+}
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+function toast(html, bad, ms) {
+  const t = $("toast"); t.innerHTML = html; t.className = "show" + (bad ? " bad" : "");
+  setTimeout(() => { t.className = ""; }, ms);
+}
+function burst(list) {
+  const fx = $("fx"), r = $("cust").getBoundingClientRect(), a = $("app").getBoundingClientRect();
+  const cx = r.left - a.left + 60, cy = r.top - a.top + 50;
+  for (let k = 0; k < 9; k++) {
+    const s = document.createElement("span"); s.className = "fx"; s.textContent = list[rnd(0, list.length - 1)];
+    s.style.left = cx + "px"; s.style.top = cy + "px"; fx.appendChild(s);
+    const dx = rnd(-120, 160), dy = rnd(-60, 120);
+    s.animate([{ transform: "translate(0,0) scale(.6)", opacity: 1 }, { transform: `translate(${dx}px,${dy}px) scale(1.5)`, opacity: 0 }], { duration: 900, easing: "ease-out" }).onfinish = () => s.remove();
+  }
+}
+function gameOver() {
+  const isBest = G.score > best; if (isBest) { best = G.score; store.set("pm_best", best); }
+  $("overShop").textContent = SHOPS[stageOf(total)].e;
+  $("overScore").textContent = "⭐ Poin: " + G.score;
+  $("overBest").textContent = isBest ? "🏆 REKOR BARU!" : "🏅 Terbaik: " + best;
+  $("overInfo").textContent = "Pembeli dilayani: " + G.served + " (total " + total + ")";
+  show("over");
+}
+function shareScore() {
+  const txt = CONFIG.shareText + " Poinku: " + G.score + " ⭐";
+  if (navigator.share) navigator.share({ text: txt }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => { $("btnShare").textContent = "✅ Tersalin! Kirim ke temanmu"; }).catch(() => {});
+}
+
+document.querySelectorAll("[data-lv]").forEach(b => b.addEventListener("click", () => startGame(+b.dataset.lv)));
+$("btnGive").addEventListener("pointerdown", e => { e.preventDefault(); give(); });
+$("btnUndo").addEventListener("pointerdown", e => { e.preventDefault(); if (G.lock) return; G.tray.pop(); renderTray(); });
+$("btnAgain").onclick = () => { $("btnShare").textContent = "📣 Tantang Temanmu"; startGame(G.base); };
+$("btnMenu").onclick = () => { $("btnShare").textContent = "📣 Tantang Temanmu"; refreshMenu(); show("menu"); };
+$("btnShare").onclick = shareScore;
+$("btnColl").onclick = showColl;
+$("btnBack").onclick = () => { refreshMenu(); show("menu"); };
+$("btnHelp").onclick = () => show("help");
+$("btnHelpBack").onclick = () => { refreshMenu(); show("menu"); };
+$("btnSnd").onclick = () => { soundOn = !soundOn; store.set("pm_snd", soundOn); refreshMenu(); beep(660, .1); };
+refreshMenu();
+</script>
+</body>
+</html>
